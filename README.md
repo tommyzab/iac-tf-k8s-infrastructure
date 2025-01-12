@@ -3,6 +3,8 @@
 This project sets up an AWS EKS cluster with various modules for networking, load balancing, monitoring, and more using Terraform.
 
 
+![alt text](https://github.com/tommyzab/iac-tf-k8s-infrastructure/blob/main/EKS-TF.png)
+
 
 ## Modules
 
