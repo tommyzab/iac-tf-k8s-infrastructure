@@ -1,0 +1,31 @@
+configs:
+  cm:
+    timeout.reconciliation: 5s
+
+extraObjects:
+  - apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      annotations:
+        meta.helm.sh/release-name: argo-cd
+        meta.helm.sh/release-namespace: argocd
+      generation: 480
+      labels:
+        app.kubernetes.io/managed-by: Helm
+      name: nginx
+      namespace: argocd
+    spec:
+      destination:
+        server: https://kubernetes.default.svc
+      project: default
+      source:
+        directory:
+          jsonnet: {}
+          recurse: true
+        path: app
+        repoURL: https://github.com/tommyzab/Nginx-App-Deploy-on-Local-Kubernetes-Cluster--KinD--with-ArgoCD
+        targetRevision: HEAD
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
