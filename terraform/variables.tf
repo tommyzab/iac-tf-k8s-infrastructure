@@ -9,17 +9,17 @@ variable "region" {
 }
 
 variable "vpc_cidr" {
-  description = "The cidr of the vpc"
+  description = "The cidr of the VPC"
   type        = string
 }
 
 variable "subnet_cidr_private" {
-  description = "cidr blocks for the private subnets"
+  description = "CIDR blocks for the private subnets"
   type        = list(any)
 }
 
 variable "subnet_cidr_public" {
-  description = "cidr blocks for the public subnets"
+  description = "CIDR blocks for the public subnets"
   type        = list(any)
 }
 
