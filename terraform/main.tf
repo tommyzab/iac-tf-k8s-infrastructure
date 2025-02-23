@@ -1,5 +1,3 @@
-
-
 module "network" {
   source              = "./modules/network"
   vpc_cidr            = var.vpc_cidr
@@ -38,6 +36,7 @@ module "alb-controller" {
   depends_on       = [module.eks, module.alb]
 }
 
+
 module "monitoring" {
   source       = "./modules/monitoring"
   namespace    = var.monitoring_namespace
@@ -46,12 +45,14 @@ module "monitoring" {
 }
 
 
+module "autoscaling" {
+  source = "./modules/autoscaling"
+  eks_cluster_name = module.eks.eks_cluster_name
+}
+
+
 module "argocd" {
   source = "./modules/argocd"
   argocd_namespace = var.argocd_namespace
 }
 
-module "autoscaling" {
-  source = "./modules/autoscaling"
-  eks_cluster_name = module.eks.eks_cluster_name
-}

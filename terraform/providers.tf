@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     bucket = "terraform-state-tommy"
     key = "global/s3/terraform.tfstate"
-    region = "us-east-1"
+    region = var.region
     dynamodb_table = "terraform_state_locking"
     encrypt = true
   }

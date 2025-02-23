@@ -13,7 +13,6 @@ variable "vpc_cidr" {
   type        = string
 }
 
-
 variable "subnet_cidr_private" {
   description = "cidr blocks for the private subnets"
   type        = list(any)
@@ -28,7 +27,6 @@ variable "availability_zone" {
   description = "availability zones for the private subnets"
   type        = list(any)
 }
-
 
 variable "kube_config" {
   type    = string
