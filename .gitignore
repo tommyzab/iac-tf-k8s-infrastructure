@@ -1,2 +1,36 @@
-backend/terraform.tfstate
-backend/terraform.tfstate.backup
+# Terraform State Files (Sensitive Information)
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate*
+!*.tfstate.example  # Allow example files
+
+# Terraform Plan and Cache Files
+*.tfplan
+.terraform.lock.hcl
+.terraform/
+
+# AWS Credentials & Config (Local Profile)
+.aws/credentials
+.aws/config
+
+# IDE & Editor Files (VSCode, JetBrains, etc.)
+.vscode/
+.idea/
+*.iml
+
+# Logs & Debugging Files
+*.log
+*.log.*
+
+# Shell History & Execution Files
+*.sh~
+*.bak
+*.swp
+.DS_Store  # macOS metadata files
+
+# Private Keys & Sensitive Files
+*.pem
+*.p12
+*.key
+*.crt
+*.env
