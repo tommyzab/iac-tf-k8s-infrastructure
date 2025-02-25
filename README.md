@@ -1,107 +1,104 @@
-# Terraform AWS EKS Project
+# Infrastructure as Code with Terraform and Kubernetes
 
-This project sets up an AWS EKS cluster with various modules for networking, load balancing, monitoring, and more using Terraform.
+This repository contains Terraform configurations for setting up a production-grade infrastructure on AWS, including EKS cluster, networking, monitoring, and CI/CD components.
 
+## Architecture Overview
 
-![alt text](https://github.com/tommyzab/iac-tf-k8s-infrastructure/blob/main/EKS-TF.png)
+The infrastructure consists of:
+- VPC with public and private subnets across multiple availability zones
+- EKS cluster for Kubernetes workloads
+- Application Load Balancer (ALB) for ingress traffic
+- Monitoring stack with Prometheus and Grafana
+- ArgoCD for GitOps deployments
+- Auto-scaling configuration for optimal resource utilization
 
+## Prerequisites
 
-## Modules
+- AWS CLI configured with appropriate credentials
+- Terraform >= 1.0.0
+- kubectl installed and configured
+- Helm 3.x
 
-### Network
+## Project Structure
 
-The `network` module sets up the VPC, subnets, internet gateway, NAT gateways, and route tables. This ensures that the infrastructure is highly available across two availability zones.
+```
+.
+├── backend/                 # Terraform backend configuration
+├── terraform/              # Main Terraform configurations
+│   ├── modules/           # Reusable Terraform modules
+│   │   ├── alb/          # Load Balancer configuration
+│   │   ├── eks/          # EKS cluster configuration
+│   │   ├── network/      # VPC and networking
+│   │   └── monitoring/   # Monitoring stack
+│   ├── main.tf           # Main Terraform configuration
+│   ├── variables.tf      # Variable definitions
+│   └── terraform.tfvars  # Variable values
+```
 
-### ALB
+## Getting Started
 
-The `alb` module sets up the Application Load Balancer and its security group. The ALB is internet-facing and is the only resource accessible from the internet.
-
-### EKS
-
-The `eks` module sets up the EKS cluster, IAM roles, and managed node groups. The EKS cluster is deployed in private subnets for security.
-
-### ALB Controller
-
-The `alb-controller` module sets up the AWS Load Balancer Controller using Helm. This controller manages the ALB resources for Kubernetes services.
-
-### Monitoring
-
-The `monitoring` module sets up Prometheus and Grafana using Helm. An ingress is created to expose Grafana on a dedicated ALB for monitoring and alerting.
-
-### ArgoCD
-
-The `argocd` module sets up ArgoCD using Helm. ArgoCD is used for continuous deployment of applications on the EKS cluster.
-
-### Autoscaling
-
-The `autoscaling` module sets up the Cluster Autoscaler and Metrics Server using Helm. This ensures that the EKS nodes can scale up and down based on the load.
-
-## Usage
-
-1. **Initialize Terraform:**
-
-   ```sh
+1. Initialize the backend:
+   ```bash
+   cd backend
    terraform init
-    ```
-
-2. **Plan the deployment:**
-   ```sh
-   terraform plan
-    ```
-
-3. **Apply the deployment:**
-   ```sh
    terraform apply
-    ```
+   ```
 
-## Variables
+2. Initialize and apply the main infrastructure:
+   ```bash
+   cd ../terraform
+   terraform init
+   terraform plan
+   terraform apply
+   ```
 
-The project uses several variables defined in `terraform/variables.tf` and `backend/variables.tf`. You can override these variables by creating a `backend/terraform.tfvars` file.
+3. Configure kubectl for EKS:
+   ```bash
+   aws eks update-kubeconfig --name <cluster-name> --region <region>
+   ```
 
-## Backend Configuration
+## Module Documentation
 
-The backend configuration is stored in the `backend` folder. It sets up an S3 bucket and DynamoDB table for storing the Terraform state and locks.
+### Network Module
+Creates a VPC with public and private subnets, NAT gateways, and necessary routing.
 
-## Providers
+### EKS Module
+Provisions an EKS cluster with managed node groups and necessary IAM roles.
 
-The project uses the following providers:
+### ALB Module
+Sets up Application Load Balancer and required IAM roles for the AWS Load Balancer Controller.
 
-- AWS
-- Helm
-- Kubernetes
-- Random
-- TLS
+### Monitoring Module
+Deploys Prometheus and Grafana for infrastructure and application monitoring.
 
-## Deployment Details
+## Security Considerations
 
-1. **VPC and Subnets:**
-   - Created a VPC with 2 public and 2 private subnets across 2 availability zones.
-   - Configured route tables, internet gateway, and NAT gateways for proper routing.
+- All S3 buckets have public access blocked
+- EKS cluster endpoint is private
+- Secrets are managed through AWS Secrets Manager
+- Network security follows AWS best practices
 
-2. **Security Groups:**
-   - Defined security groups for ALB and EKS to control inbound and outbound traffic.
+## Maintenance
 
-3. **EKS Cluster:**
-   - Deployed an EKS cluster in private subnets with managed node groups.
-   - Configured IAM roles for the EKS cluster and nodes.
+### State Management
+- Terraform state is stored in S3 with versioning enabled
+- State locking is implemented using DynamoDB
+- Old state versions are automatically cleaned up after 90 days
 
-4. **Application Load Balancer:**
-   - Set up an internet-facing ALB in public subnets to handle incoming traffic.
+### Backup and Recovery
+- EKS cluster state is backed up regularly
+- Critical configurations are version controlled
+- Disaster recovery procedures are documented
 
-5. **Monitoring and Alerting:**
-   - Deployed Prometheus and Grafana on the EKS cluster using Helm.
-   - Created an ingress to expose Grafana on a dedicated ALB.
+## Contributing
 
-6. **Cluster Autoscaler:**
-   - Configured Cluster Autoscaler to manage the scaling of EKS nodes based on load.
-
-7. **ArgoCD and Application Deployment:**
-   - Deployed ArgoCD for continuous deployment.
-   - Deployed a "Hello World" NGINX application using ArgoCD.
-   - Configured HPA to scale the application based on CPU usage.
-   - Deployed AWS ALB Ingress Controller for the NGINX application.
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
