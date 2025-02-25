@@ -4,7 +4,7 @@ This repository contains Terraform configurations for setting up a cost-effectiv
 
 ## Architecture Diagram
 
-![EKS Architecture](eks-tf.png)
+![alt text](https://github.com/tommyzab/iac-tf-k8s-infrastructure/blob/main/EKS-TF.png)
 
 The diagram above illustrates the high-level architecture of our infrastructure. Note that while the diagram shows NAT gateways in both availability zones, our implementation uses a single NAT gateway for cost optimization.
 
