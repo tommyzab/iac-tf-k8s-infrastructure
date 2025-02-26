@@ -2,142 +2,124 @@
 
 This repository contains Terraform configurations for setting up a cost-effective, production-grade infrastructure on AWS, including EKS cluster, networking, monitoring, and CI/CD components.
 
-## Architecture Diagram
+## Features
 
-![alt text](https://github.com/tommyzab/iac-tf-k8s-infrastructure/blob/main/EKS-TF.png)
-
-The diagram above illustrates the high-level architecture of our infrastructure. Note that while the diagram shows NAT gateways in both availability zones, our implementation uses a single NAT gateway for cost optimization.
-
-## Architecture Overview
-
-The infrastructure consists of:
-- VPC with public and private subnets across multiple availability zones
-- Single NAT Gateway (cost-optimized)
-- EKS cluster with SPOT instances
-- Application Load Balancer (ALB) with AWS Load Balancer Controller
-- Monitoring stack with Prometheus and Grafana (optimized configuration)
-- ArgoCD for basic GitOps deployments
-- Cluster Autoscaling with metrics server
-
-## Cost Optimization Features
-- Single NAT Gateway instead of one per AZ
-- SPOT instances for EKS nodes
-- Conservative autoscaling settings
-- Minimal but sufficient resource requests/limits
-- Disabled unnecessary features (AlertManager, Dex)
-- 7-day retention for monitoring data
+- VPC with public/private subnets across availability zones
+- EKS cluster with optimized node configuration
+- Application Load Balancer with AWS Load Balancer Controller
+- Monitoring stack (Prometheus & Grafana)
+- ArgoCD for GitOps deployments
+- Cluster & Pod Autoscaling with metrics server
+- Multi-environment support with isolated state files
+- Enhanced security features for state management
 
 ## Prerequisites
 
 - AWS CLI configured with appropriate credentials
 - Terraform >= 1.0.0
-- kubectl installed and configured
+- kubectl
 - Helm 3.x
 
 ## Project Structure
 
 ```
 .
-├── backend/                 # Terraform state management configuration
-│   ├── main.tf             # S3 bucket and DynamoDB table configuration
-│   ├── variables.tf        # Backend variables
-│   ├── outputs.tf          # Backend outputs
-│   └── terraform.tfvars    # Backend variable values
-├── terraform/              # Main infrastructure configuration
+├── bootstrap/              # State management infrastructure setup
+├── terraform/
+│   ├── environments/      # Environment-specific configurations
+│   │   ├── dev/          # Development environment configs
+│   │   │   ├── backend.hcl
+│   │   │   └── terraform.tfvars
+│   │   ├── prod/         # Production environment configs
+│   │   │   ├── backend.hcl
+│   │   │   └── terraform.tfvars
+│   │   └── README.md     # Environment management documentation
 │   ├── modules/           
-│   │   ├── network/       # VPC, subnets, NAT Gateway
-│   │   ├── eks/          # EKS cluster with SPOT instances
-│   │   ├── alb/          # Application Load Balancer
+│   │   ├── network/      # VPC, subnets, NAT Gateway
+│   │   ├── eks/         # EKS cluster configuration
+│   │   ├── alb/         # Application Load Balancer
 │   │   ├── alb-controller/# AWS Load Balancer Controller
-│   │   ├── monitoring/   # Prometheus & Grafana stack
-│   │   ├── autoscaling/  # Cluster & Pod autoscaling
-│   │   └── argocd/       # Basic ArgoCD setup
-│   ├── main.tf           # Main infrastructure
-│   ├── variables.tf      # Variable definitions
-│   └── terraform.tfvars  # Variable values
+│   │   ├── monitoring/  # Prometheus & Grafana stack
+│   │   ├── autoscaling/ # Cluster & Pod autoscaling
+│   │   └── argocd/      # Basic ArgoCD setup
+│   ├── main.tf          # Main infrastructure
+│   ├── variables.tf     # Variable definitions
+│   └── providers.tf     # Provider configurations
 ```
-
-## Module Details
-
-### Network Module
-- VPC with public and private subnets
-- Single NAT Gateway for cost optimization
-- Basic routing tables and internet gateway
-
-### EKS Module
-- Managed Kubernetes cluster (v1.27)
-- SPOT instances for cost efficiency (t3.medium)
-- Basic node group configuration (2-4 nodes)
-- OIDC provider configuration
-
-### ALB Module
-- Application Load Balancer in public subnets
-- Basic HTTP listener configuration
-- Security group with HTTP/HTTPS access
-
-### ALB Controller Module
-- AWS Load Balancer Controller (v1.4.4)
-- IAM roles and policies for ALB management
-- Helm-based deployment
-
-### Monitoring Module
-- Prometheus with 7-day retention
-- Grafana with persistent storage (1Gi)
-- LoadBalancer service type for access
-- Disabled AlertManager for resource efficiency
-- Basic resource limits and requests
-
-### Autoscaling Module
-- Cluster Autoscaler
-- Metrics Server (v3.12.0)
-- Conservative scaling policies
-- Basic HPA configuration
-- Resource-based scaling (CPU/Memory)
-
-### ArgoCD Module
-- Basic ArgoCD installation (v3.35.4)
-- Minimal resource configuration
-- LoadBalancer service type
-- Disabled optional features (Dex, notifications)
 
 ## Getting Started
 
-1. Set up the backend infrastructure:
+1. Initialize the state management infrastructure:
    ```bash
-   cd backend
+   cd bootstrap
    terraform init
-   terraform plan
    terraform apply
    ```
 
-2. Deploy the main infrastructure:
+2. Deploy to an environment (dev/prod):
    ```bash
    cd ../terraform
-   terraform init
-   terraform plan
-   terraform apply
+   # For development
+   terraform init -backend-config=environments/dev/backend.hcl
+   terraform plan -var-file=environments/dev/terraform.tfvars
+   terraform apply -var-file=environments/dev/terraform.tfvars
+
+   # For production
+   terraform init -backend-config=environments/prod/backend.hcl
+   terraform plan -var-file=environments/prod/terraform.tfvars
+   terraform apply -var-file=environments/prod/terraform.tfvars
    ```
 
 3. Configure kubectl:
    ```bash
-   aws eks update-kubeconfig --name <cluster-name> --region <region>
+   aws eks update-kubeconfig --name eks-cluster --region <region>
    ```
+
+## Environment Management
+
+Each environment (dev/prod) has:
+- Isolated state files in S3
+- Environment-specific variables
+- Separate backend configurations
+- Independent resource naming
+
+The environments are completely isolated from each other, ensuring:
+- No accidental cross-environment changes
+- Clear separation of configurations
+- Independent state management
+- Environment-specific customization
+
+## State Management Security
+
+The state management infrastructure includes:
+- Encrypted S3 bucket with versioning
+- MFA delete protection
+- Access logging enabled
+- SSL-only access enforcement
+- DynamoDB table encryption
+- CloudWatch monitoring
+- IAM access policies
+- Public access blocking
+
+## Cost Optimization
+
+- Single NAT Gateway instead of one per AZ
+- Efficient instance type selection (t3.medium)
+- Conservative autoscaling settings (2-4 nodes)
+- Minimal resource requests/limits
+- 7-day monitoring data retention
+- Disabled optional features
 
 ## Security Features
 
-- Private EKS endpoint with public access
+- Private EKS endpoint with public access enabled
 - Security groups for all components
 - IAM roles with least privilege
 - OIDC integration for service accounts
-- No public S3 access
-
-## Maintenance
-
-### State Management
-- S3-based state storage with versioning
-- DynamoDB state locking
-- 90-day state version expiration
-- STANDARD_IA transition after 30 days
+- Encrypted S3 state bucket with MFA delete
+- DynamoDB state locking with encryption
+- SSL enforcement for state access
+- Access logging and monitoring
 
 ## Contributing
 
@@ -148,5 +130,10 @@ The infrastructure consists of:
 
 ## License
 
-This project is licensed under the MIT License.
+MIT License
 
+For detailed documentation of each module, please refer to the README files in their respective directories.
+
+## Architecture Diagram
+
+![alt text](https://github.com/tommyzab/iac-tf-k8s-infrastructure/blob/main/EKS-TF.png)
