@@ -1,5 +1,0 @@
-bucket_name =  "terraform-state-tommy"
-region = "us-east-1"
-dynamodb_table_name = "terraform_state_locking"
-sse_algorithm = "AES256"
-billing_mode = "PAY_PER_REQUEST"
