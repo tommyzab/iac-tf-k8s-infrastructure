@@ -1,14 +1,5 @@
-variable "prefix" {
-  description = "Prefix to be used for all resources created by this infrastructure"
-  type        = string
-  validation {
-    condition     = length(var.prefix) > 2 && length(var.prefix) <= 10
-    error_message = "Prefix must be between 3 and 10 characters long."
-  }
-}
-
 variable "region" {
-  description = "AWS region where resources will be created"
+  description = "AWS region"
   type        = string
   validation {
     condition     = can(regex("^[a-z]{2}-[a-z]+-[0-9]{1}$", var.region))
@@ -17,7 +8,7 @@ variable "region" {
 }
 
 variable "vpc_cidr" {
-  description = "CIDR block for the VPC network"
+  description = "The CIDR block for the VPC"
   type        = string
   validation {
     condition     = can(cidrhost(var.vpc_cidr, 0))
@@ -26,7 +17,7 @@ variable "vpc_cidr" {
 }
 
 variable "subnet_cidr_private" {
-  description = "List of CIDR blocks for private subnets"
+  description = "CIDR blocks for private subnets"
   type        = list(string)
   validation {
     condition     = length(var.subnet_cidr_private) > 0
@@ -35,7 +26,7 @@ variable "subnet_cidr_private" {
 }
 
 variable "subnet_cidr_public" {
-  description = "List of CIDR blocks for public subnets"
+  description = "CIDR blocks for public subnets"
   type        = list(string)
   validation {
     condition     = length(var.subnet_cidr_public) > 0
@@ -44,7 +35,7 @@ variable "subnet_cidr_public" {
 }
 
 variable "availability_zone" {
-  description = "List of AWS availability zones for subnet placement"
+  description = "Availability zones for subnets"
   type        = list(string)
   validation {
     condition     = length(var.availability_zone) >= 2
@@ -59,17 +50,12 @@ variable "kube_config" {
 }
 
 variable "monitoring_namespace" {
-  description = "Kubernetes namespace for monitoring tools"
-  type        = string
-  default     = "monitoring"
+  type    = string
+  default = "monitoring"
 }
 
 variable "argocd_namespace" {
-  description = "Kubernetes namespace for ArgoCD deployment"
-  type        = string
-  validation {
-    condition     = length(var.argocd_namespace) > 0
-    error_message = "ArgoCD namespace must not be empty."
-  }
+  type    = string
+  default = "argocd"
 }
 
