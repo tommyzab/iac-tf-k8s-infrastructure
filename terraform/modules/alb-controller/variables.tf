@@ -1,20 +1,30 @@
+variable "cluster_name" {
+  description = "Name of the EKS cluster"
+  type        = string
+}
+
 variable "region" {
-  description = "Name region"
+  description = "AWS region"
   type        = string
 }
 
 variable "namespace" {
-  description = "Namespace"
+  description = "Kubernetes namespace for ALB controller"
   type        = string
 }
 
-
 variable "eks_cluster_name" {
-  description = "Name of EKS Cluster"
+  description = "Name of the EKS cluster"
+  type        = string
 }
 
-
 variable "issuer" {
-  description = "Issuer OIDC"
+  description = "OIDC issuer URL"
+  type        = string
+}
+
+variable "vpc_id" {
+  description = "ID of the VPC"
+  type        = string
 }
 
