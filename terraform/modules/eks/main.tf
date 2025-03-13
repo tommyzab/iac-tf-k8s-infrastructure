@@ -1,66 +1,68 @@
-resource "aws_iam_role" "eks-iam-role" {
- name = "${var.prefix}-eks-iam-role"
- path = "/"
- assume_role_policy = <<EOF
-{
- "Version": "2012-10-17",
- "Statement": [
-  {
-   "Effect": "Allow",
-   "Principal": {
-    "Service": "eks.amazonaws.com"
-   },
-   "Action": "sts:AssumeRole"
-  }
- ]
-}
-EOF
-
+resource "aws_iam_role" "cluster" {
+  name = "eks-cluster-role"
+  path = "/"
+  
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "eks.amazonaws.com"
+        }
+      }
+    ]
+  })
 }
 
-resource "aws_iam_role_policy_attachment" "demo-AmazonEKSClusterPolicy" {
+resource "aws_iam_role_policy_attachment" "cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.eks-iam-role.name
+  role       = aws_iam_role.cluster.name
 }
 
-resource "aws_iam_role_policy_attachment" "demo-ALBIngressControllerIAMPolicy" {
+resource "aws_iam_role_policy_attachment" "alb_ingress_policy" {
   policy_arn = "arn:aws:iam::292029882946:policy/ALBIngressControllerIAMPolicy"
-  role       = aws_iam_role.eks-iam-role.name
+  role       = aws_iam_role.cluster.name
 }
 
-resource "aws_iam_role_policy_attachment" "eks-AmazonEC2ContainerRegistryReadOnly" {
+resource "aws_iam_role_policy_attachment" "ecr_read_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.eks-iam-role.name
+  role       = aws_iam_role.cluster.name
 }
 
-
-resource "aws_eks_cluster" "eks-cluster" {
-  name     = "${var.prefix}-eks-cluster"
-  role_arn = aws_iam_role.eks-iam-role.arn
+resource "aws_eks_cluster" "main" {
+  name     = "eks-cluster"
+  role_arn = aws_iam_role.cluster.arn
+  version  = "1.27"
 
   vpc_config {
+    subnet_ids              = var.private_subnet_ids
     endpoint_private_access = true
-    endpoint_public_access = true
-    subnet_ids = var.private_subnet_ids
+    endpoint_public_access  = true
   }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.cluster_policy,
+    aws_iam_role_policy_attachment.alb_ingress_policy,
+  ]
 }
 
 data "tls_certificate" "certificate" {
-  url = aws_eks_cluster.eks-cluster.identity.0.oidc.0.issuer
+  url = aws_eks_cluster.main.identity.0.oidc.0.issuer
 }
-### OIDC config
-resource "aws_iam_openid_connect_provider" "eks-cluster" {
+
+resource "aws_iam_openid_connect_provider" "main" {
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.certificate.certificates[0].sha1_fingerprint]
-  url             = aws_eks_cluster.eks-cluster.identity.0.oidc.0.issuer
+  url             = aws_eks_cluster.main.identity.0.oidc.0.issuer
 }
 
-
-
-resource "aws_iam_role" "nodes" {
-  name = "eks-node-group-nodes"
+resource "aws_iam_role" "node" {
+  name = "eks-node-role"
 
   assume_role_policy = jsonencode({
+    Version = "2012-10-17"
     Statement = [{
       Action = "sts:AssumeRole"
       Effect = "Allow"
@@ -68,89 +70,60 @@ resource "aws_iam_role" "nodes" {
         Service = "ec2.amazonaws.com"
       }
     }]
-    Version = "2012-10-17"
   })
 }
 
-resource "aws_iam_role_policy_attachment" "nodes-AmazonEKSWorkerNodePolicy" {
+resource "aws_iam_role_policy_attachment" "node_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.nodes.name
+  role       = aws_iam_role.node.name
 }
 
-resource "aws_iam_role_policy_attachment" "nodes-AmazonEKS_CNI_Policy" {
+resource "aws_iam_role_policy_attachment" "cni_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.nodes.name
+  role       = aws_iam_role.node.name
 }
 
-resource "aws_iam_role_policy_attachment" "nodes-AmazonEC2ContainerRegistryReadOnly" {
+resource "aws_iam_role_policy_attachment" "node_ecr_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.nodes.name
+  role       = aws_iam_role.node.name
 }
 
-resource "aws_iam_role_policy_attachment" "nodes-AmazonEBSCSIDriverPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-  role       = aws_iam_role.nodes.name
-}
-
-resource "aws_iam_policy" "nodes-Policy" {
-  name        = "node-Policy"
-  path        = "/"
-  description = "Policy for worker nodes"
-
-  policy = file("iam-policy.json")
-}
-
-resource "aws_iam_role_policy_attachment" "nodes-attachment" {
-  role       = aws_iam_role.nodes.name
-  policy_arn = aws_iam_policy.nodes-Policy.arn
-}
-
-
-resource "aws_iam_role_policy_attachment" "nodes-ElasticLoadBalancingPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingReadOnly"
-  role       = aws_iam_role.nodes.name
-}
-
-resource "aws_eks_node_group" "private-nodes" {
-  cluster_name    = aws_eks_cluster.eks-cluster.name
-  node_group_name = "private-nodes"
-  node_role_arn   = aws_iam_role.nodes.arn
-  subnet_ids = var.private_subnet_ids
-  capacity_type  = "ON_DEMAND"
-  instance_types = ["t3.medium"]
-
+resource "aws_eks_node_group" "main" {
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "eks-node-group"
+  node_role_arn   = aws_iam_role.node.arn
+  subnet_ids      = var.private_subnet_ids
 
   scaling_config {
     desired_size = 2
     max_size     = 4
-    min_size     = 0
+    min_size     = 1
   }
 
-  update_config {
-    max_unavailable = 1
-  }
+  instance_types = ["t3.medium"]
 
-
+  depends_on = [
+    aws_iam_role_policy_attachment.node_policy,
+    aws_iam_role_policy_attachment.cni_policy,
+    aws_iam_role_policy_attachment.node_ecr_policy,
+  ]
 }
-
 
 resource "aws_eks_addon" "addon" {
-  depends_on        = [aws_eks_node_group.private-nodes]
-  # for_each          = { for addon in var.addons : addon.name => addon }
-  cluster_name      = aws_eks_cluster.eks-cluster.id
-  addon_name        = var.addon_name
-  addon_version     = var.addon_version
+  depends_on     = [aws_eks_node_group.main]
+  cluster_name   = aws_eks_cluster.main.id
+  addon_name     = var.addon_name
+  addon_version  = var.addon_version
 }
 
-
-resource "kubernetes_namespace" "monitoring-namespace" {
-    metadata {
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
     name = var.monitoring_namespace
   }
 }
 
-resource "kubernetes_namespace" "argocd-namespace" {
-    metadata {
+resource "kubernetes_namespace" "argocd" {
+  metadata {
     name = var.argocd_namespace
   }
 }
