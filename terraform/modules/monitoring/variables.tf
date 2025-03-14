@@ -1,9 +1,16 @@
 variable "namespace" {
-  type = string
-  description = "Namespace name"
+  description = "Kubernetes namespace for monitoring stack"
+  type        = string
+  default     = "monitoring"
 }
 
 variable "alb_dns_name" {
-  type = string
-  description = "dns name name from ALB"
+  description = "DNS name of the ALB"
+  type        = string
+}
+
+variable "monitoring_namespace" {
+  description = "Kubernetes namespace for monitoring tools"
+  type        = string
+  default     = "monitoring"
 }
