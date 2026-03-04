@@ -29,12 +29,7 @@ This separation ensures that:
 
 ## Usage
 
-1. Switch to an environment:
-```bash
-./switch-env.sh dev    # or prod
-```
-
-2. Plan changes:
+1. Plan changes:
 ```bash
 terraform plan -var-file=environments/dev/terraform.tfvars
 ```
@@ -88,9 +83,8 @@ encrypt        = true
 
 ## Best Practices
 
-1. Always use the switch-env.sh script to change environments
-2. Review plans carefully before applying
-3. Use meaningful commit messages for environment changes
-4. Document environment-specific configurations
-5. Keep production configurations in version control
-6. Use separate AWS credentials per environment 
+1. Review plans carefully before applying
+2. Use meaningful commit messages for environment changes
+3. Document environment-specific configurations
+4. Keep production configurations in version control
+5. Use separate AWS credentials per environment 
