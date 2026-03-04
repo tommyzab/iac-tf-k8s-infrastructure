@@ -60,3 +60,13 @@ variable "argocd_namespace" {
   default = "argocd"
 }
 
+variable "environment" {
+  description = "Deployment environment (e.g., dev, prod)"
+  type        = string
+}
+
+variable "application" {
+  description = "Application or project name used for tagging"
+  type        = string
+}
+
