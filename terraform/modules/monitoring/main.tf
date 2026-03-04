@@ -56,14 +56,14 @@ resource "helm_release" "prometheus" {
   }
   set {
     name  = "alertmanager.enabled"
-    value = "false"  # Disable alertmanager to save resources
+    value = "false" # Disable alertmanager to save resources
   }
 }
 
 resource "kubernetes_secret" "grafana" {
   metadata {
     name      = "grafana"
-    namespace = var.namespace
+    namespace = var.monitoring_namespace
   }
   data = {
     admin-user     = "admin"
@@ -112,17 +112,14 @@ resource "helm_release" "grafana" {
     name  = "datasources.datasources\\.yaml.apiVersion"
     value = "1"
   }
-  
   set {
     name  = "datasources.datasources\\.yaml.datasources[0].name"
     value = "Prometheus"
   }
-  
   set {
     name  = "datasources.datasources\\.yaml.datasources[0].type"
     value = "prometheus"
   }
-  
   set {
     name  = "datasources.datasources\\.yaml.datasources[0].url"
     value = "http://prometheus-server:80"
@@ -131,11 +128,11 @@ resource "helm_release" "grafana" {
   values = [
     templatefile("${path.module}/templates/grafana-values.yaml", {
       admin_existing_secret = kubernetes_secret.grafana.metadata[0].name
-      admin_user_key       = "admin-user"
-      admin_password_key   = "admin-password"
-      prometheus_svc       = "${helm_release.prometheus.name}-server"
-      dns_endpoint        = var.alb_dns_name
-      replicas           = 1
+      admin_user_key        = "admin-user"
+      admin_password_key    = "admin-password"
+      prometheus_svc        = "${helm_release.prometheus.name}-server"
+      dns_endpoint          = var.alb_dns_name
+      replicas              = 1
     })
   ]
 }

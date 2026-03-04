@@ -1,21 +1,11 @@
-resource "aws_lb_target_group" "main" {
-  name        = "alb-tg"
-  target_type = "alb"
-  port        = aws_lb_listener.http.port
-  protocol    = "TCP"
-  vpc_id      = var.vpc_id
-}
-
-resource "aws_lb_target_group_attachment" "main" {
-  target_group_arn = aws_lb_target_group.main.arn
-  target_id        = aws_lb.main.arn
-  port             = aws_lb_listener.http.port
-}
-
 resource "aws_security_group" "alb" {
-  name        = "alb-sg"
+  name        = "${var.environment}-${var.application}-alb-sg"
   description = "Security group for ALB"
   vpc_id      = var.vpc_id
+
+  tags = merge(var.common_tags, {
+    Name = "${var.environment}-${var.application}-alb-sg"
+  })
 
   ingress {
     description = "HTTP from anywhere"
@@ -39,25 +29,22 @@ resource "aws_security_group" "alb" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name = "alb-sg"
-  }
 }
 
 resource "aws_lb" "main" {
-  name               = "main-alb"
+  name               = "${var.environment}-${var.application}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
-  subnets           = var.public_subnet_ids
+  subnets            = var.public_subnet_ids
 
   enable_deletion_protection = false
 
-  tags = {
-    Name = "main-alb"
-    "kubernetes.io/cluster/eks-cluster" = "owned"
-  }
+  tags = merge(
+    var.common_tags,
+    { Name = "${var.environment}-${var.application}-alb" },
+    var.eks_cluster_name != "" ? { "kubernetes.io/cluster/${var.eks_cluster_name}" = "owned" } : {}
+  )
 }
 
 resource "aws_lb_listener" "http" {
