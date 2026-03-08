@@ -74,8 +74,8 @@ resource "aws_dynamodb_table" "terraform_locks" {
 
 # Create folders in S3 for each environment
 resource "aws_s3_object" "env_folders" {
-  for_each = toset(["dev/", "prod/", "staging/"])
-  bucket   = aws_s3_bucket.terraform_state.id
-  key      = each.key
+  for_each     = toset(["dev/", "prod/", "staging/"])
+  bucket       = aws_s3_bucket.terraform_state.id
+  key          = each.key
   content_type = "application/x-directory"
 } 

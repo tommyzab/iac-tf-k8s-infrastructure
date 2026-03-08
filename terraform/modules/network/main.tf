@@ -3,9 +3,9 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  tags = {
-    Name = "main-vpc"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.environment}-${var.application}-vpc"
+  })
 }
 
 # Public Subnets
@@ -17,10 +17,10 @@ resource "aws_subnet" "public" {
 
   map_public_ip_on_launch = true
 
-  tags = {
-    Name = "public-subnet-${count.index + 1}"
+  tags = merge(var.common_tags, {
+    Name                     = "${var.environment}-${var.application}-public-subnet-${count.index + 1}"
     "kubernetes.io/role/elb" = "1"
-  }
+  })
 }
 
 # Private Subnets
@@ -30,37 +30,37 @@ resource "aws_subnet" "private" {
   cidr_block        = var.subnet_cidr_private[count.index]
   availability_zone = var.availability_zone[count.index]
 
-  tags = {
-    Name = "private-subnet-${count.index + 1}"
+  tags = merge(var.common_tags, {
+    Name                              = "${var.environment}-${var.application}-private-subnet-${count.index + 1}"
     "kubernetes.io/role/internal-elb" = "1"
-  }
+  })
 }
 
 # Internet Gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
-  tags = {
-    Name = "main-igw"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.environment}-${var.application}-igw"
+  })
 }
 
 # Single NAT Gateway (cost-effective approach)
 resource "aws_eip" "nat" {
   domain = "vpc"
 
-  tags = {
-    Name = "nat-eip"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.environment}-${var.application}-nat-eip"
+  })
 }
 
 resource "aws_nat_gateway" "main" {
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.public[0].id
 
-  tags = {
-    Name = "main-nat"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.environment}-${var.application}-nat"
+  })
 
   depends_on = [aws_internet_gateway.main]
 }
@@ -74,9 +74,9 @@ resource "aws_route_table" "public" {
     gateway_id = aws_internet_gateway.main.id
   }
 
-  tags = {
-    Name = "public-rt"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.environment}-${var.application}-public-rt"
+  })
 }
 
 resource "aws_route_table" "private" {
@@ -87,9 +87,9 @@ resource "aws_route_table" "private" {
     nat_gateway_id = aws_nat_gateway.main.id
   }
 
-  tags = {
-    Name = "private-rt"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.environment}-${var.application}-private-rt"
+  })
 }
 
 # Route Table Associations

@@ -1,7 +1,15 @@
+locals {
+  cluster_name = "${var.environment}-${var.application}-eks-cluster"
+}
+
 resource "aws_iam_role" "cluster" {
-  name = "eks-cluster-role"
+  name = "${var.environment}-${var.application}-eks-cluster-role"
   path = "/"
-  
+
+  tags = merge(var.common_tags, {
+    Name = "${var.environment}-${var.application}-eks-cluster-role"
+  })
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -22,7 +30,8 @@ resource "aws_iam_role_policy_attachment" "cluster_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "alb_ingress_policy" {
-  policy_arn = "arn:aws:iam::292029882946:policy/ALBIngressControllerIAMPolicy"
+  count      = var.alb_ingress_policy_arn != "" ? 1 : 0
+  policy_arn = var.alb_ingress_policy_arn
   role       = aws_iam_role.cluster.name
 }
 
@@ -32,9 +41,13 @@ resource "aws_iam_role_policy_attachment" "ecr_read_policy" {
 }
 
 resource "aws_eks_cluster" "main" {
-  name     = "eks-cluster"
+  name     = local.cluster_name
   role_arn = aws_iam_role.cluster.arn
   version  = "1.27"
+
+  tags = merge(var.common_tags, {
+    Name = local.cluster_name
+  })
 
   vpc_config {
     subnet_ids              = var.private_subnet_ids
@@ -59,7 +72,11 @@ resource "aws_iam_openid_connect_provider" "main" {
 }
 
 resource "aws_iam_role" "node" {
-  name = "eks-node-role"
+  name = "${var.environment}-${var.application}-eks-node-role"
+
+  tags = merge(var.common_tags, {
+    Name = "${var.environment}-${var.application}-eks-node-role"
+  })
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -90,7 +107,7 @@ resource "aws_iam_role_policy_attachment" "node_ecr_policy" {
 
 resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
-  node_group_name = "eks-node-group"
+  node_group_name = "${var.environment}-${var.application}-eks-node-group"
   node_role_arn   = aws_iam_role.node.arn
   subnet_ids      = var.private_subnet_ids
 
@@ -110,10 +127,10 @@ resource "aws_eks_node_group" "main" {
 }
 
 resource "aws_eks_addon" "addon" {
-  depends_on     = [aws_eks_node_group.main]
-  cluster_name   = aws_eks_cluster.main.id
-  addon_name     = var.addon_name
-  addon_version  = var.addon_version
+  depends_on    = [aws_eks_node_group.main]
+  cluster_name  = aws_eks_cluster.main.id
+  addon_name    = var.addon_name
+  addon_version = var.addon_version
 }
 
 resource "kubernetes_namespace" "monitoring" {
