@@ -77,7 +77,7 @@ resource "helm_release" "metrics_server" {
 
 resource "kubernetes_horizontal_pod_autoscaler" "nginx-hpa" {
   metadata {
-    name = "nginx-hpa"
+    name      = "nginx-hpa"
     namespace = "monitoring"
   }
 
@@ -87,13 +87,13 @@ resource "kubernetes_horizontal_pod_autoscaler" "nginx-hpa" {
 
     scale_target_ref {
       api_version = "apps/v1"
-      kind = "Deployment"
-      name = "nginx"
+      kind        = "Deployment"
+      name        = "nginx"
     }
 
-  target_cpu_utilization_percentage = 65 
-  
-}
+    target_cpu_utilization_percentage = 65
+
+  }
 }
 
 data "aws_region" "current" {}
