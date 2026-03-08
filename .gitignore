@@ -26,7 +26,10 @@ terraform.tfstate.backup
 *.sh~
 *.bak
 *.swp
-.DS_Store  # macOS metadata files
+
+# macOS metadata files
+.DS_Store
+**/.DS_Store
 
 # Private Keys & Sensitive Files
 *.pem
