@@ -2,8 +2,8 @@ variable "region" {
   description = "AWS region"
   type        = string
   validation {
-    condition     = can(regex("^[a-z]{2}-[a-z]+-[0-9]{1}$", var.region))
-    error_message = "Region must be a valid AWS region format (e.g., us-east-1)."
+    condition     = can(regex("^[a-z]{2}-[a-z]+-[0-9]{1,2}$", var.region))
+    error_message = "Region must be a valid AWS region format (e.g., us-east-1, us-west-2)."
   }
 }
 
