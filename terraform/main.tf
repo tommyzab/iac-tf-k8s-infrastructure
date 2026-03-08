@@ -11,11 +11,11 @@ module "network" {
 }
 
 module "alb" {
-  source           = "./modules/alb"
-  environment      = var.environment
-  application      = var.application
-  common_tags      = local.common_tags
-  eks_cluster_name = module.eks.eks_cluster_name
+  source            = "./modules/alb"
+  environment       = var.environment
+  application       = var.application
+  common_tags       = local.common_tags
+  eks_cluster_name  = module.eks.eks_cluster_name
   region            = var.region
   vpc_id            = module.network.vpc_id
   public_subnet_ids = module.network.public_subnet_ids
@@ -34,10 +34,10 @@ module "eks" {
 }
 
 module "alb-controller" {
-  source      = "./modules/alb-controller"
-  environment = var.environment
-  application = var.application
-  common_tags = local.common_tags
+  source           = "./modules/alb-controller"
+  environment      = var.environment
+  application      = var.application
+  common_tags      = local.common_tags
   region           = var.region
   namespace        = var.monitoring_namespace
   eks_cluster_name = module.eks.eks_cluster_name
@@ -58,17 +58,17 @@ module "monitoring" {
 }
 
 module "autoscaling" {
-  source      = "./modules/autoscaling"
-  environment = var.environment
-  application = var.application
-  common_tags = local.common_tags
+  source           = "./modules/autoscaling"
+  environment      = var.environment
+  application      = var.application
+  common_tags      = local.common_tags
   eks_cluster_name = module.eks.eks_cluster_name
 }
 
 module "argocd" {
-  source      = "./modules/argocd"
-  environment = var.environment
-  application = var.application
-  common_tags = local.common_tags
+  source           = "./modules/argocd"
+  environment      = var.environment
+  application      = var.application
+  common_tags      = local.common_tags
   argocd_namespace = var.argocd_namespace
 }
