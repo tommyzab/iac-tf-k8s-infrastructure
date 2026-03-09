@@ -33,6 +33,20 @@ module "eks" {
   addon_version        = "v1.12.6-eksbuild.1" # Use appropriate version
 }
 
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = var.monitoring_namespace
+  }
+  depends_on = [module.eks]
+}
+
+resource "kubernetes_namespace" "argocd" {
+  metadata {
+    name = var.argocd_namespace
+  }
+  depends_on = [module.eks]
+}
+
 module "alb-controller" {
   source           = "./modules/alb-controller"
   environment      = var.environment
