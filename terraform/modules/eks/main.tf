@@ -132,15 +132,3 @@ resource "aws_eks_addon" "addon" {
   addon_name    = var.addon_name
   addon_version = var.addon_version
 }
-
-resource "kubernetes_namespace" "monitoring" {
-  metadata {
-    name = var.monitoring_namespace
-  }
-}
-
-resource "kubernetes_namespace" "argocd" {
-  metadata {
-    name = var.argocd_namespace
-  }
-}
