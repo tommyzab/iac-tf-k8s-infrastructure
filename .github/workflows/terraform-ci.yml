@@ -14,6 +14,7 @@ permissions:
 env:
   TF_WORKING_DIR: terraform
   AWS_REGION: us-east-1
+  STATE_BUCKET: terraform-state-tommy
 
 jobs:
   terraform:
@@ -40,6 +41,18 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Bootstrap State Resources (if missing)
+        run: |
+          if ! aws s3api head-bucket --bucket ${{ env.STATE_BUCKET }} 2>/dev/null; then
+            echo "S3 bucket ${{ env.STATE_BUCKET }} not found. Bootstrapping..."
+            cd bootstrap
+            terraform init
+            terraform apply -auto-approve
+            cd ..
+          else
+            echo "S3 bucket ${{ env.STATE_BUCKET }} already exists."
+          fi
 
       - name: Terraform Init (dev)
         run: terraform init -backend-config=environments/dev/backend.hcl
