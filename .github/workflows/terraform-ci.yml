@@ -14,7 +14,7 @@ permissions:
 env:
   TF_WORKING_DIR: terraform
   AWS_REGION: us-east-1
-  STATE_BUCKET: terraform-state-tommy
+  STATE_BUCKET: terraform-state-tommy-infra-v1
 
 jobs:
   terraform:
