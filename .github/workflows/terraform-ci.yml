@@ -15,6 +15,7 @@ env:
   TF_WORKING_DIR: terraform
   AWS_REGION: us-east-1
   STATE_BUCKET: terraform-state-tommy-infra-v1
+  STATE_TABLE: terraform-state-locking-v1
 
 jobs:
   terraform:
@@ -44,14 +45,37 @@ jobs:
 
       - name: Bootstrap State Resources (if missing)
         run: |
-          if ! aws s3api head-bucket --bucket ${{ env.STATE_BUCKET }} 2>/dev/null; then
-            echo "S3 bucket ${{ env.STATE_BUCKET }} not found. Bootstrapping..."
+          # Check for S3 bucket
+          if aws s3api head-bucket --bucket ${{ env.STATE_BUCKET }} 2>/dev/null; then
+            BUCKET_EXISTS="true"
+          else
+            BUCKET_EXISTS="false"
+          fi
+
+          # Check for DynamoDB table
+          if aws dynamodb describe-table --table-name ${{ env.STATE_TABLE }} 2>/dev/null; then
+            TABLE_EXISTS="true"
+          else
+            TABLE_EXISTS="false"
+          fi
+
+          if [ "$BUCKET_EXISTS" = "false" ] || [ "$TABLE_EXISTS" = "false" ]; then
+            echo "State resources missing (Bucket: $BUCKET_EXISTS, Table: $TABLE_EXISTS). Bootstrapping..."
             cd bootstrap
             terraform init
+            
+            # Import existing resources if only one is missing to avoid conflict errors
+            if [ "$BUCKET_EXISTS" = "true" ]; then
+              terraform import aws_s3_bucket.terraform_state ${{ env.STATE_BUCKET }} || true
+            fi
+            if [ "$TABLE_EXISTS" = "true" ]; then
+              terraform import aws_dynamodb_table.terraform_locks ${{ env.STATE_TABLE }} || true
+            fi
+
             terraform apply -auto-approve
             cd ..
           else
-            echo "S3 bucket ${{ env.STATE_BUCKET }} already exists."
+            echo "State resources already exist."
           fi
 
       - name: Terraform Init (dev)
