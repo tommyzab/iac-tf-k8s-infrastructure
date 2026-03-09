@@ -3,7 +3,7 @@ data "aws_caller_identity" "current" {}
 resource "aws_iam_policy" "alb_controller" {
   name        = "${var.environment}-${var.application}-alb-controller"
   description = "Policy for AWS Load Balancer Controller"
-  policy      = file("${path.module}/../../iam-policy.json")
+  policy      = file("${path.module}/alb_controller_iam_policy.json")
 
   tags = merge(var.common_tags, {
     Name = "${var.environment}-${var.application}-alb-controller-policy"
@@ -24,7 +24,7 @@ resource "aws_iam_role" "alb_controller" {
         }
         Condition = {
           StringEquals = {
-            "${replace(var.issuer, "https://", "")}:sub" = "system:serviceaccount:${var.namespace}:aws-load-balancer-controller"
+            "${replace(var.issuer, "https://", "")}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
           }
         }
       }
