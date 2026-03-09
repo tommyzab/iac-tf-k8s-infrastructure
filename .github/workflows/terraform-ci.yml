@@ -41,8 +41,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Terraform Init (no backend for CI)
-        run: terraform init -backend=false
+      - name: Terraform Init (dev)
+        run: terraform init -backend-config=environments/dev/backend.hcl
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
