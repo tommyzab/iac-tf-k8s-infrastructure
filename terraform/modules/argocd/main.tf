@@ -5,6 +5,11 @@ resource "helm_release" "argocd" {
   namespace  = var.argocd_namespace
   version    = "3.35.4"
 
+  # Load nginx application from application.yaml
+  values = [
+    file("${path.module}/application.yaml")
+  ]
+
   # Basic configuration with minimal features
   set {
     name  = "server.service.type"
